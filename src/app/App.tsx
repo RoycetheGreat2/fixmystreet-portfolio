@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useCallback, useRef, useState, type CSSProperties } from "react";
 import splashImg from "@/imports/fee78946-d512-4e29-bf15-7a41dfb5dd0c.jpg";
 import mapImg from "@/imports/eccdc319-2c9b-46c5-9db0-88ac3b951d6d.jpg";
 import reportsImg from "@/imports/d3ea7516-ab31-4740-b259-1ea7054cf948.jpg";
@@ -56,140 +56,204 @@ const techStack = [
 
 const BASE_WIDTH = 168;
 const FOCUSED_WIDTH = 272;
+const ASPECT = 2048 / 1280;
+const ANIM_MS = 520;
+const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
-function PhoneFrame({
+type SlotRect = { left: number; top: number; width: number; height: number };
+
+function slotHeight(phoneWidth: number) {
+  return phoneWidth * ASPECT + 12 + 20;
+}
+
+function centerRect(container: HTMLElement): SlotRect {
+  const w = FOCUSED_WIDTH;
+  const h = slotHeight(w);
+  return {
+    left: (container.offsetWidth - w) / 2,
+    top: (container.offsetHeight - h) / 2,
+    width: w,
+    height: h,
+  };
+}
+
+function PhoneVisual({
   src,
   alt,
   label,
   rotation,
-  width,
-  isSelected,
-  isDimmed,
+  phoneWidth,
+  focused,
+  interactive,
   onClick,
-  layout,
 }: {
   src: string;
   alt: string;
   label: string;
   rotation: number;
-  width: number;
-  isSelected: boolean;
-  isDimmed: boolean;
-  onClick: () => void;
-  layout: "row" | "focus";
+  phoneWidth: number;
+  focused: boolean;
+  interactive?: boolean;
+  onClick?: () => void;
 }) {
-  const frameStyle: CSSProperties =
-    layout === "focus"
-      ? {
-          position: "absolute",
-          left: "50%",
-          top: "50%",
-          transform: isSelected
-            ? "translate(-50%, -50%) rotate(0deg) scale(1)"
-            : `translate(calc(-50% + var(--offset-x)), -50%) rotate(${rotation * 0.4}deg) scale(0.72)`,
-          opacity: isDimmed ? 0.38 : 1,
-          zIndex: isSelected ? 30 : 5,
-          transition:
-            "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, width 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
-          border: "none",
-          background: "transparent",
-          padding: 0,
-          cursor: "pointer",
-        }
-      : {
+  const inner = (
+    <div className="flex flex-col items-center gap-3">
+      <div
+        style={{
           transform: `rotate(${rotation}deg)`,
-          transition: "transform 0.35s ease",
-          border: "none",
-          background: "transparent",
-          padding: 0,
-          cursor: "pointer",
-        };
+          transition: `transform ${ANIM_MS}ms ${EASE}`,
+        }}
+      >
+        <div
+          style={{
+            borderRadius: "2.6rem",
+            border: focused ? "10px solid #3b63ff" : "8px solid #151d3a",
+            boxShadow: focused
+              ? "0 0 0 1px rgba(59,99,255,0.4), inset 0 0 0 2px rgba(255,255,255,0.06), 0 36px 90px rgba(0,0,0,0.7), 0 0 60px rgba(59,99,255,0.25)"
+              : "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 28px 72px rgba(0,0,0,0.65), 0 0 40px rgba(59,99,255,0.07)",
+            background: "#151d3a",
+            width: `${phoneWidth}px`,
+            overflow: "hidden",
+            position: "relative",
+            transition: `width ${ANIM_MS}ms ${EASE}, border 0.3s ease, box-shadow 0.35s ease`,
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: "28px",
+              background: "#151d3a",
+              zIndex: 10,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <div
+              style={{
+                width: "52px",
+                height: "14px",
+                background: "#0d1226",
+                borderRadius: "20px",
+              }}
+            />
+          </div>
+          <img
+            src={src}
+            alt={alt}
+            style={{
+              width: `${phoneWidth}px`,
+              display: "block",
+              aspectRatio: "1280 / 2048",
+              objectFit: "cover",
+            }}
+          />
+        </div>
+      </div>
+      <span
+        style={{
+          fontSize: focused ? "11px" : "10px",
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: focused ? "#8ab4ff" : "#5a6e98",
+          transition: `color 0.3s ease, font-size 0.3s ease`,
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+
+  if (!interactive) return inner;
 
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label={`View ${label}`}
-      aria-pressed={isSelected}
-      className="flex flex-col items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b63ff] rounded-3xl"
-      style={frameStyle}
+      className="group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b63ff] rounded-3xl border-0 bg-transparent p-0 cursor-pointer"
+      style={{ transition: "transform 0.35s ease" }}
     >
-      <div
-        style={{
-          borderRadius: "2.6rem",
-          border: isSelected
-            ? "10px solid #3b63ff"
-            : "8px solid #151d3a",
-          boxShadow: isSelected
-            ? "0 0 0 1px rgba(59,99,255,0.4), inset 0 0 0 2px rgba(255,255,255,0.06), 0 36px 90px rgba(0,0,0,0.7), 0 0 60px rgba(59,99,255,0.25)"
-            : "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 28px 72px rgba(0,0,0,0.65), 0 0 40px rgba(59,99,255,0.07)",
-          background: "#151d3a",
-          width: `${width}px`,
-          overflow: "hidden",
-          position: "relative",
-          transition: "width 0.45s cubic-bezier(0.22, 1, 0.36, 1), border 0.3s ease, box-shadow 0.35s ease",
-        }}
-        className={layout === "row" ? "group-hover:scale-105 group-hover:!rotate-0" : ""}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            height: "28px",
-            background: "#151d3a",
-            zIndex: 10,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              width: "52px",
-              height: "14px",
-              background: "#0d1226",
-              borderRadius: "20px",
-            }}
-          />
-        </div>
-        <img
-          src={src}
-          alt={alt}
-          style={{
-            width: `${width}px`,
-            display: "block",
-            aspectRatio: "1280 / 2048",
-            objectFit: "cover",
-          }}
-        />
+      <div className="group-hover:scale-105 transition-transform duration-300">
+        {inner}
       </div>
-      <span
-        style={{
-          fontSize: isSelected ? "11px" : "10px",
-          fontWeight: 600,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: isSelected ? "#8ab4ff" : "#5a6e98",
-          transition: "color 0.3s ease, font-size 0.3s ease",
-        }}
-      >
-        {label}
-      </span>
     </button>
   );
 }
 
 function PhoneGallery() {
   const [selected, setSelected] = useState<number | null>(null);
-  const hasFocus = selected !== null;
+  const [expanded, setExpanded] = useState(false);
+  const [originRect, setOriginRect] = useState<SlotRect | null>(null);
+  const [animateMotion, setAnimateMotion] = useState(false);
 
-  const getOffset = (index: number) => {
-    if (selected === null || index === selected) return 0;
-    const dist = index - selected;
-    return dist * 150;
+  const containerRef = useRef<HTMLDivElement>(null);
+  const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  const measureSlot = useCallback((index: number): SlotRect | null => {
+    const slot = slotRefs.current[index];
+    const container = containerRef.current;
+    if (!slot || !container) return null;
+    const s = slot.getBoundingClientRect();
+    const c = container.getBoundingClientRect();
+    return {
+      left: s.left - c.left,
+      top: s.top - c.top,
+      width: s.width,
+      height: s.height,
+    };
+  }, []);
+
+  const openPhone = (index: number) => {
+    const rect = measureSlot(index);
+    if (!rect) return;
+    setOriginRect(rect);
+    setSelected(index);
+    setExpanded(false);
+    setAnimateMotion(false);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setAnimateMotion(true);
+        setExpanded(true);
+      });
+    });
   };
+
+  const closePhone = () => {
+    setExpanded(false);
+  };
+
+  const handleOverlayTransitionEnd = () => {
+    if (!expanded && selected !== null) {
+      setSelected(null);
+      setOriginRect(null);
+      setAnimateMotion(false);
+    }
+  };
+
+  const handlePhoneClick = (index: number) => {
+    if (selected === index) {
+      closePhone();
+      return;
+    }
+    if (selected !== null) {
+      closePhone();
+      return;
+    }
+    openPhone(index);
+  };
+
+  const targetRect =
+    expanded && containerRef.current ? centerRect(containerRef.current) : null;
+  const overlayRect = expanded && targetRect ? targetRect : originRect;
+  const overlayPhone = selected !== null ? phones[selected] : null;
+  const motionTransition = animateMotion
+    ? `left ${ANIM_MS}ms ${EASE}, top ${ANIM_MS}ms ${EASE}, width ${ANIM_MS}ms ${EASE}, height ${ANIM_MS}ms ${EASE}`
+    : "none";
 
   return (
     <div
@@ -197,7 +261,6 @@ function PhoneGallery() {
         position: "relative",
         marginBottom: "5rem",
         padding: "3rem 1rem",
-        minHeight: hasFocus ? "min(520px, 70vh)" : "340px",
       }}
     >
       <div
@@ -214,69 +277,117 @@ function PhoneGallery() {
           zIndex: 0,
         }}
       />
-      {hasFocus && (
-        <button
-          type="button"
-          aria-label="Close phone preview"
-          onClick={() => setSelected(null)}
-          style={{
-            position: "absolute",
-            inset: 0,
-            zIndex: 2,
-            border: "none",
-            background: "transparent",
-            cursor: "default",
-          }}
-        />
-      )}
+
       <div
+        ref={containerRef}
         style={{
           position: "relative",
-          zIndex: 3,
-          display: hasFocus ? "block" : "flex",
-          justifyContent: hasFocus ? undefined : "center",
-          flexWrap: hasFocus ? undefined : "wrap",
-          gap: hasFocus ? undefined : "clamp(16px, 3vw, 36px)",
-          height: hasFocus ? "min(480px, 65vh)" : "auto",
-          alignItems: hasFocus ? undefined : "flex-end",
+          zIndex: 1,
+          minHeight: "min(420px, 58vh)",
         }}
       >
-        {phones.map((phone, index) => (
+        {selected !== null && (
+          <button
+            type="button"
+            aria-label="Close phone preview"
+            onClick={closePhone}
+            style={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 15,
+              border: "none",
+              background: "rgba(5, 8, 20, 0.45)",
+              cursor: "pointer",
+              opacity: expanded ? 1 : 0,
+              transition: `opacity ${ANIM_MS}ms ease`,
+            }}
+          />
+        )}
+
+        {/* Row — layout never changes; other phones stay put */}
+        <div
+          className="flex justify-center flex-wrap"
+          style={{
+            gap: "clamp(16px, 3vw, 36px)",
+            alignItems: "flex-end",
+            position: "relative",
+            zIndex: 2,
+          }}
+        >
+          {phones.map((phone, index) => (
+            <div
+              key={phone.label}
+              ref={(el) => {
+                slotRefs.current[index] = el;
+              }}
+              style={{
+                visibility: selected === index ? "hidden" : "visible",
+              }}
+            >
+              <PhoneVisual
+                {...phone}
+                phoneWidth={BASE_WIDTH}
+                rotation={phone.rotation}
+                focused={false}
+                interactive
+                onClick={() => handlePhoneClick(index)}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Flying overlay — from slot → center → slot */}
+        {selected !== null && overlayRect && overlayPhone && (
           <div
-            key={phone.label}
-            style={
-              hasFocus
-                ? ({
-                    ["--offset-x" as string]: `${getOffset(index)}px`,
-                  } as CSSProperties)
-                : undefined
-            }
-          >
-            <PhoneFrame
-              {...phone}
-              width={hasFocus && selected === index ? FOCUSED_WIDTH : BASE_WIDTH}
-              isSelected={selected === index}
-              isDimmed={hasFocus && selected !== index}
-              layout={hasFocus ? "focus" : "row"}
-              onClick={() =>
-                setSelected(selected === index ? null : index)
+            role="presentation"
+            onTransitionEnd={(e) => {
+              if (
+                e.target === e.currentTarget &&
+                (e.propertyName === "left" || e.propertyName === "top")
+              ) {
+                handleOverlayTransitionEnd();
               }
+            }}
+            style={{
+              position: "absolute",
+              left: overlayRect.left,
+              top: overlayRect.top,
+              width: overlayRect.width,
+              height: overlayRect.height,
+              zIndex: 40,
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "center",
+              transition: motionTransition,
+              pointerEvents: expanded ? "auto" : "none",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              closePhone();
+            }}
+          >
+            <PhoneVisual
+              {...overlayPhone}
+              phoneWidth={expanded ? FOCUSED_WIDTH : BASE_WIDTH}
+              rotation={expanded ? 0 : overlayPhone.rotation}
+              focused
             />
           </div>
-        ))}
+        )}
       </div>
-      {hasFocus && (
+
+      {selected !== null && (
         <p
           style={{
             position: "relative",
-            zIndex: 4,
+            zIndex: 3,
             textAlign: "center",
             marginTop: "1rem",
             fontSize: "12px",
             color: "#5a6e98",
           }}
         >
-          Tap the screen again or another phone to close
+          Tap the backdrop or the phone again to close
         </p>
       )}
     </div>
