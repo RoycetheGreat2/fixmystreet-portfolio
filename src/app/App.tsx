@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, type CSSProperties } from "react";
+import { useState } from "react";
 import splashImg from "@/imports/fee78946-d512-4e29-bf15-7a41dfb5dd0c.jpg";
 import mapImg from "@/imports/eccdc319-2c9b-46c5-9db0-88ac3b951d6d.jpg";
 import reportsImg from "@/imports/d3ea7516-ab31-4740-b259-1ea7054cf948.jpg";
@@ -57,26 +57,11 @@ const techStack = [
 const BASE_WIDTH = 210;
 const FOCUSED_WIDTH = 320;
 const ASPECT = 2048 / 1280;
-const ANIM_MS_OPEN = 560;
-const ANIM_MS_CLOSE = 820;
-const EASE_OPEN = "cubic-bezier(0.22, 1, 0.36, 1)";
-const EASE_CLOSE = "cubic-bezier(0.16, 1, 0.3, 1)";
-
-type SlotRect = { left: number; top: number; width: number; height: number };
+const TRANSITION_MS = 450;
+const TRANSITION_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 function slotHeight(phoneWidth: number) {
   return phoneWidth * ASPECT + 12 + 20;
-}
-
-function centerRect(container: HTMLElement): SlotRect {
-  const w = FOCUSED_WIDTH;
-  const h = slotHeight(w);
-  return {
-    left: (container.offsetWidth - w) / 2,
-    top: (container.offsetHeight - h) / 2,
-    width: w,
-    height: h,
-  };
 }
 
 function PhoneVisual({
@@ -88,8 +73,6 @@ function PhoneVisual({
   focused,
   interactive,
   onClick,
-  animMs = ANIM_MS_CLOSE,
-  animEase = EASE_CLOSE,
 }: {
   src: string;
   alt: string;
@@ -99,15 +82,13 @@ function PhoneVisual({
   focused: boolean;
   interactive?: boolean;
   onClick?: () => void;
-  animMs?: number;
-  animEase?: string;
 }) {
   const inner = (
     <div className="flex flex-col items-center gap-3">
       <div
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: `transform ${animMs}ms ${animEase}`,
+          transition: `transform ${TRANSITION_MS}ms ${TRANSITION_EASE}`,
         }}
       >
         <div
@@ -121,7 +102,7 @@ function PhoneVisual({
             width: `${phoneWidth}px`,
             overflow: "hidden",
             position: "relative",
-            transition: `width ${animMs}ms ${animEase}, border 0.3s ease, box-shadow 0.35s ease`,
+            transition: `width ${TRANSITION_MS}ms ${TRANSITION_EASE}, border 0.3s ease, box-shadow 0.35s ease`,
           }}
         >
           <div
@@ -193,78 +174,7 @@ function PhoneVisual({
 
 function PhoneGallery() {
   const [selected, setSelected] = useState<number | null>(null);
-  const [expanded, setExpanded] = useState(false);
-  const [originRect, setOriginRect] = useState<SlotRect | null>(null);
-  const [animateMotion, setAnimateMotion] = useState(false);
-
-  const containerRef = useRef<HTMLDivElement>(null);
-  const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  const measureSlot = useCallback((index: number): SlotRect | null => {
-    const slot = slotRefs.current[index];
-    const container = containerRef.current;
-    if (!slot || !container) return null;
-    const s = slot.getBoundingClientRect();
-    const c = container.getBoundingClientRect();
-    return {
-      left: s.left - c.left,
-      top: s.top - c.top,
-      width: s.width,
-      height: s.height,
-    };
-  }, []);
-
-  const openPhone = (index: number) => {
-    const rect = measureSlot(index);
-    if (!rect) return;
-    setOriginRect(rect);
-    setSelected(index);
-    setExpanded(false);
-    setAnimateMotion(false);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        setAnimateMotion(true);
-        setExpanded(true);
-      });
-    });
-  };
-
-  const closePhone = () => {
-    setExpanded(false);
-  };
-
-  const handleOverlayTransitionEnd = () => {
-    if (!expanded && selected !== null) {
-      setSelected(null);
-      setOriginRect(null);
-      setAnimateMotion(false);
-    }
-  };
-
-  const handlePhoneClick = (index: number) => {
-    if (selected === index) {
-      closePhone();
-      return;
-    }
-    if (selected !== null) {
-      closePhone();
-      return;
-    }
-    openPhone(index);
-  };
-
-  const targetRect =
-    expanded && containerRef.current ? centerRect(containerRef.current) : null;
-  const overlayRect = expanded && targetRect ? targetRect : originRect;
-  const overlayPhone = selected !== null ? phones[selected] : null;
-  const motionMs = expanded ? ANIM_MS_OPEN : ANIM_MS_CLOSE;
-  const motionEase = expanded ? EASE_OPEN : EASE_CLOSE;
-  const motionTransition = animateMotion
-    ? `left ${motionMs}ms ${motionEase}, top ${motionMs}ms ${motionEase}, width ${motionMs}ms ${motionEase}, height ${motionMs}ms ${motionEase}`
-    : "none";
-  const overlayPhoneWidth = overlayRect
-    ? Math.min(FOCUSED_WIDTH, Math.max(BASE_WIDTH, overlayRect.width))
-    : BASE_WIDTH;
+  const scaleFocused = FOCUSED_WIDTH / BASE_WIDTH;
 
   return (
     <div
@@ -290,120 +200,59 @@ function PhoneGallery() {
         }}
       />
 
-      {selected !== null && expanded && (
-        <p
+      {selected !== null && (
+        <button
+          type="button"
+          aria-label="Close phone preview"
+          onClick={() => setSelected(null)}
           style={{
-            position: "absolute",
-            top: "0.25rem",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zIndex: 45,
-            fontSize: "11px",
-            color: "#5a6e98",
-            pointerEvents: "none",
-            margin: 0,
+            position: "fixed",
+            inset: 0,
+            zIndex: 25,
+            border: "none",
+            background: "rgba(5, 8, 20, 0.45)",
+            cursor: "pointer",
           }}
-        >
-          Tap the backdrop or the phone again to close
-        </p>
+        />
       )}
 
       <div
-        ref={containerRef}
+        className="flex justify-center flex-wrap"
         style={{
+          gap: "clamp(16px, 3vw, 36px)",
+          alignItems: "flex-end",
           position: "relative",
-          zIndex: 1,
+          zIndex: 2,
           minHeight: slotHeight(BASE_WIDTH) + 40,
-          overflow: "visible",
         }}
       >
-        {selected !== null && (
-          <button
-            type="button"
-            aria-label="Close phone preview"
-            onClick={closePhone}
-            style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 25,
-              border: "none",
-              background: "rgba(5, 8, 20, 0.45)",
-              cursor: "pointer",
-              opacity: expanded ? 1 : 0,
-              transition: `opacity ${motionMs}ms ease`,
-            }}
-          />
-        )}
+        {phones.map((phone, index) => {
+          const isSelected = selected === index;
+          const isDimmed = selected !== null && !isSelected;
 
-        {/* Row — layout never changes; other phones stay put */}
-        <div
-          className="flex justify-center flex-wrap"
-          style={{
-            gap: "clamp(16px, 3vw, 36px)",
-            alignItems: "flex-end",
-            position: "relative",
-            zIndex: 2,
-          }}
-        >
-          {phones.map((phone, index) => (
+          return (
             <div
               key={phone.label}
-              ref={(el) => {
-                slotRefs.current[index] = el;
-              }}
               style={{
-                visibility: selected === index ? "hidden" : "visible",
+                transition: `transform ${TRANSITION_MS}ms ${TRANSITION_EASE}, opacity 0.35s ease`,
+                transform: isSelected ? `scale(${scaleFocused})` : "scale(1)",
+                transformOrigin: "center bottom",
+                opacity: isDimmed ? 0.45 : 1,
+                zIndex: isSelected ? 10 : 1,
+                position: "relative",
               }}
             >
               <PhoneVisual
                 {...phone}
                 phoneWidth={BASE_WIDTH}
-                rotation={phone.rotation}
-                focused={false}
+                rotation={isSelected ? 0 : phone.rotation}
+                focused={isSelected}
                 interactive
-                onClick={() => handlePhoneClick(index)}
+                onClick={() => setSelected(isSelected ? null : index)}
               />
             </div>
-          ))}
-        </div>
-
-        {/* Flying overlay — from slot → center → slot */}
-        {selected !== null && overlayRect && overlayPhone && (
-          <div
-            role="presentation"
-            onTransitionEnd={(e) => {
-              if (e.target !== e.currentTarget || expanded) return;
-              if (e.propertyName === "width") handleOverlayTransitionEnd();
-            }}
-            style={{
-              position: "absolute",
-              left: overlayRect.left,
-              top: overlayRect.top,
-              width: overlayRect.width,
-              height: overlayRect.height,
-              zIndex: 35,
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "center",
-              transition: motionTransition,
-              pointerEvents: expanded ? "auto" : "none",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              closePhone();
-            }}
-          >
-            <PhoneVisual
-              {...overlayPhone}
-              phoneWidth={overlayPhoneWidth}
-              rotation={expanded ? 0 : overlayPhone.rotation}
-              focused
-              animMs={motionMs}
-              animEase={motionEase}
-            />
-          </div>
-        )}
+          );
+        })}
       </div>
     </div>
   );
