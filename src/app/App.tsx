@@ -54,8 +54,8 @@ const techStack = [
   "Firebase Auth",
 ];
 
-const BASE_WIDTH = 168;
-const FOCUSED_WIDTH = 272;
+const BASE_WIDTH = 210;
+const FOCUSED_WIDTH = 320;
 const ASPECT = 2048 / 1280;
 const ANIM_MS = 520;
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -107,9 +107,9 @@ function PhoneVisual({
         <div
           style={{
             borderRadius: "2.6rem",
-            border: focused ? "10px solid #3b63ff" : "8px solid #151d3a",
+            border: "8px solid #151d3a",
             boxShadow: focused
-              ? "0 0 0 1px rgba(59,99,255,0.4), inset 0 0 0 2px rgba(255,255,255,0.06), 0 36px 90px rgba(0,0,0,0.7), 0 0 60px rgba(59,99,255,0.25)"
+              ? "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 36px 90px rgba(0,0,0,0.7), 0 0 40px rgba(59,99,255,0.12)"
               : "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 28px 72px rgba(0,0,0,0.65), 0 0 40px rgba(59,99,255,0.07)",
             background: "#151d3a",
             width: `${phoneWidth}px`,
@@ -159,7 +159,7 @@ function PhoneVisual({
           fontWeight: 600,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          color: focused ? "#8ab4ff" : "#5a6e98",
+          color: "#5a6e98",
           transition: `color 0.3s ease, font-size 0.3s ease`,
         }}
       >
@@ -283,7 +283,7 @@ function PhoneGallery() {
         style={{
           position: "relative",
           zIndex: 1,
-          minHeight: "min(420px, 58vh)",
+          minHeight: "min(480px, 62vh)",
         }}
       >
         {selected !== null && (
