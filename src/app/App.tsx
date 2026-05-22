@@ -54,8 +54,8 @@ const techStack = [
   "Firebase Auth",
 ];
 
-const BASE_WIDTH = 210;
-const FOCUSED_WIDTH = 320;
+const BASE_WIDTH = 178;
+const FOCUSED_WIDTH = 275;
 const ASPECT = 2048 / 1280;
 const TRANSITION_MS = 450;
 const TRANSITION_EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -182,7 +182,7 @@ function PhoneGallery() {
         position: "relative",
         marginBottom: "2.5rem",
         padding: "2rem 1rem",
-        zIndex: selected !== null ? 30 : 1,
+        zIndex: selected !== null ? 100 : 1,
       }}
     >
       <div
@@ -208,10 +208,10 @@ function PhoneGallery() {
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 25,
+            zIndex: 50,
             border: "none",
-            background: "rgba(5, 8, 20, 0.45)",
-            cursor: "pointer",
+            background: "transparent",
+            cursor: "default",
           }}
         />
       )}
@@ -222,23 +222,21 @@ function PhoneGallery() {
           gap: "clamp(16px, 3vw, 36px)",
           alignItems: "flex-end",
           position: "relative",
-          zIndex: 2,
+          zIndex: 60,
           minHeight: slotHeight(BASE_WIDTH) + 40,
         }}
       >
         {phones.map((phone, index) => {
           const isSelected = selected === index;
-          const isDimmed = selected !== null && !isSelected;
 
           return (
             <div
               key={phone.label}
               style={{
-                transition: `transform ${TRANSITION_MS}ms ${TRANSITION_EASE}, opacity 0.35s ease`,
+                transition: `transform ${TRANSITION_MS}ms ${TRANSITION_EASE}`,
                 transform: isSelected ? `scale(${scaleFocused})` : "scale(1)",
                 transformOrigin: "center bottom",
-                opacity: isDimmed ? 0.45 : 1,
-                zIndex: isSelected ? 10 : 1,
+                zIndex: isSelected ? 110 : 1,
                 position: "relative",
               }}
             >
