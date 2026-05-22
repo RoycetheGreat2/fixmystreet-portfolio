@@ -270,8 +270,8 @@ function PhoneGallery() {
     <div
       style={{
         position: "relative",
-        marginBottom: "-2rem",
-        padding: "1.25rem 1rem 0",
+        marginBottom: "2.5rem",
+        padding: "2rem 1rem",
         zIndex: selected !== null ? 30 : 1,
       }}
     >
@@ -314,7 +314,7 @@ function PhoneGallery() {
         style={{
           position: "relative",
           zIndex: 1,
-          minHeight: slotHeight(BASE_WIDTH) + 24,
+          minHeight: slotHeight(BASE_WIDTH) + 40,
           overflow: "visible",
         }}
       >
@@ -529,7 +529,7 @@ export default function App() {
           <div
             style={{
               borderTop: "1px solid rgba(255,255,255,0.07)",
-              paddingTop: "1.25rem",
+              paddingTop: "2rem",
               position: "relative",
               zIndex: 1,
             }}
