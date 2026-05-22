@@ -57,8 +57,10 @@ const techStack = [
 const BASE_WIDTH = 210;
 const FOCUSED_WIDTH = 320;
 const ASPECT = 2048 / 1280;
-const ANIM_MS = 520;
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+const ANIM_MS_OPEN = 560;
+const ANIM_MS_CLOSE = 820;
+const EASE_OPEN = "cubic-bezier(0.22, 1, 0.36, 1)";
+const EASE_CLOSE = "cubic-bezier(0.16, 1, 0.3, 1)";
 
 type SlotRect = { left: number; top: number; width: number; height: number };
 
@@ -86,6 +88,8 @@ function PhoneVisual({
   focused,
   interactive,
   onClick,
+  animMs = ANIM_MS_CLOSE,
+  animEase = EASE_CLOSE,
 }: {
   src: string;
   alt: string;
@@ -95,13 +99,15 @@ function PhoneVisual({
   focused: boolean;
   interactive?: boolean;
   onClick?: () => void;
+  animMs?: number;
+  animEase?: string;
 }) {
   const inner = (
     <div className="flex flex-col items-center gap-3">
       <div
         style={{
           transform: `rotate(${rotation}deg)`,
-          transition: `transform ${ANIM_MS}ms ${EASE}`,
+          transition: `transform ${animMs}ms ${animEase}`,
         }}
       >
         <div
@@ -115,7 +121,7 @@ function PhoneVisual({
             width: `${phoneWidth}px`,
             overflow: "hidden",
             position: "relative",
-            transition: `width ${ANIM_MS}ms ${EASE}, border 0.3s ease, box-shadow 0.35s ease`,
+            transition: `width ${animMs}ms ${animEase}, border 0.3s ease, box-shadow 0.35s ease`,
           }}
         >
           <div
@@ -251,16 +257,22 @@ function PhoneGallery() {
     expanded && containerRef.current ? centerRect(containerRef.current) : null;
   const overlayRect = expanded && targetRect ? targetRect : originRect;
   const overlayPhone = selected !== null ? phones[selected] : null;
+  const motionMs = expanded ? ANIM_MS_OPEN : ANIM_MS_CLOSE;
+  const motionEase = expanded ? EASE_OPEN : EASE_CLOSE;
   const motionTransition = animateMotion
-    ? `left ${ANIM_MS}ms ${EASE}, top ${ANIM_MS}ms ${EASE}, width ${ANIM_MS}ms ${EASE}, height ${ANIM_MS}ms ${EASE}`
+    ? `left ${motionMs}ms ${motionEase}, top ${motionMs}ms ${motionEase}, width ${motionMs}ms ${motionEase}, height ${motionMs}ms ${motionEase}`
     : "none";
+  const overlayPhoneWidth = overlayRect
+    ? Math.min(FOCUSED_WIDTH, Math.max(BASE_WIDTH, overlayRect.width))
+    : BASE_WIDTH;
 
   return (
     <div
       style={{
         position: "relative",
-        marginBottom: "5rem",
-        padding: "3rem 1rem",
+        marginBottom: "-2rem",
+        padding: "1.25rem 1rem 0",
+        zIndex: selected !== null ? 30 : 1,
       }}
     >
       <div
@@ -278,12 +290,32 @@ function PhoneGallery() {
         }}
       />
 
+      {selected !== null && expanded && (
+        <p
+          style={{
+            position: "absolute",
+            top: "0.25rem",
+            left: 0,
+            right: 0,
+            textAlign: "center",
+            zIndex: 45,
+            fontSize: "11px",
+            color: "#5a6e98",
+            pointerEvents: "none",
+            margin: 0,
+          }}
+        >
+          Tap the backdrop or the phone again to close
+        </p>
+      )}
+
       <div
         ref={containerRef}
         style={{
           position: "relative",
           zIndex: 1,
-          minHeight: "min(480px, 62vh)",
+          minHeight: slotHeight(BASE_WIDTH) + 24,
+          overflow: "visible",
         }}
       >
         {selected !== null && (
@@ -292,14 +324,14 @@ function PhoneGallery() {
             aria-label="Close phone preview"
             onClick={closePhone}
             style={{
-              position: "absolute",
+              position: "fixed",
               inset: 0,
-              zIndex: 15,
+              zIndex: 25,
               border: "none",
               background: "rgba(5, 8, 20, 0.45)",
               cursor: "pointer",
               opacity: expanded ? 1 : 0,
-              transition: `opacity ${ANIM_MS}ms ease`,
+              transition: `opacity ${motionMs}ms ease`,
             }}
           />
         )}
@@ -341,12 +373,8 @@ function PhoneGallery() {
           <div
             role="presentation"
             onTransitionEnd={(e) => {
-              if (
-                e.target === e.currentTarget &&
-                (e.propertyName === "left" || e.propertyName === "top")
-              ) {
-                handleOverlayTransitionEnd();
-              }
+              if (e.target !== e.currentTarget || expanded) return;
+              if (e.propertyName === "width") handleOverlayTransitionEnd();
             }}
             style={{
               position: "absolute",
@@ -354,7 +382,7 @@ function PhoneGallery() {
               top: overlayRect.top,
               width: overlayRect.width,
               height: overlayRect.height,
-              zIndex: 40,
+              zIndex: 35,
               display: "flex",
               alignItems: "flex-start",
               justifyContent: "center",
@@ -368,28 +396,15 @@ function PhoneGallery() {
           >
             <PhoneVisual
               {...overlayPhone}
-              phoneWidth={expanded ? FOCUSED_WIDTH : BASE_WIDTH}
+              phoneWidth={overlayPhoneWidth}
               rotation={expanded ? 0 : overlayPhone.rotation}
               focused
+              animMs={motionMs}
+              animEase={motionEase}
             />
           </div>
         )}
       </div>
-
-      {selected !== null && (
-        <p
-          style={{
-            position: "relative",
-            zIndex: 3,
-            textAlign: "center",
-            marginTop: "1rem",
-            fontSize: "12px",
-            color: "#5a6e98",
-          }}
-        >
-          Tap the backdrop or the phone again to close
-        </p>
-      )}
     </div>
   );
 }
@@ -514,7 +529,9 @@ export default function App() {
           <div
             style={{
               borderTop: "1px solid rgba(255,255,255,0.07)",
-              paddingTop: "3rem",
+              paddingTop: "1.25rem",
+              position: "relative",
+              zIndex: 1,
             }}
           >
             <div
