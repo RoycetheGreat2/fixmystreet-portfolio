@@ -1,3 +1,4 @@
+import { useState, type CSSProperties } from "react";
 import splashImg from "@/imports/fee78946-d512-4e29-bf15-7a41dfb5dd0c.jpg";
 import mapImg from "@/imports/eccdc319-2c9b-46c5-9db0-88ac3b951d6d.jpg";
 import reportsImg from "@/imports/d3ea7516-ab31-4740-b259-1ea7054cf948.jpg";
@@ -49,39 +50,87 @@ const techStack = [
   "Dart",
   "Firebase",
   "Cloud Firestore",
-  "Google Maps API",
+  "flutter_map",
   "Firebase Auth",
 ];
+
+const BASE_WIDTH = 168;
+const FOCUSED_WIDTH = 272;
 
 function PhoneFrame({
   src,
   alt,
   label,
   rotation,
+  width,
+  isSelected,
+  isDimmed,
+  onClick,
+  layout,
 }: {
   src: string;
   alt: string;
   label: string;
   rotation: number;
+  width: number;
+  isSelected: boolean;
+  isDimmed: boolean;
+  onClick: () => void;
+  layout: "row" | "focus";
 }) {
-  return (
-    <div className="flex flex-col items-center gap-3 group">
-      <div
-        style={{
+  const frameStyle: CSSProperties =
+    layout === "focus"
+      ? {
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: isSelected
+            ? "translate(-50%, -50%) rotate(0deg) scale(1)"
+            : `translate(calc(-50% + var(--offset-x)), -50%) rotate(${rotation * 0.4}deg) scale(0.72)`,
+          opacity: isDimmed ? 0.38 : 1,
+          zIndex: isSelected ? 30 : 5,
+          transition:
+            "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, width 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+          border: "none",
+          background: "transparent",
+          padding: 0,
+          cursor: "pointer",
+        }
+      : {
           transform: `rotate(${rotation}deg)`,
           transition: "transform 0.35s ease",
+          border: "none",
+          background: "transparent",
+          padding: 0,
+          cursor: "pointer",
+        };
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`View ${label}`}
+      aria-pressed={isSelected}
+      className="flex flex-col items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b63ff] rounded-3xl"
+      style={frameStyle}
+    >
+      <div
+        style={{
           borderRadius: "2.6rem",
-          border: "8px solid #151d3a",
-          boxShadow:
-            "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 28px 72px rgba(0,0,0,0.65), 0 0 40px rgba(59,99,255,0.07)",
+          border: isSelected
+            ? "10px solid #3b63ff"
+            : "8px solid #151d3a",
+          boxShadow: isSelected
+            ? "0 0 0 1px rgba(59,99,255,0.4), inset 0 0 0 2px rgba(255,255,255,0.06), 0 36px 90px rgba(0,0,0,0.7), 0 0 60px rgba(59,99,255,0.25)"
+            : "0 0 0 1px rgba(80,110,220,0.18), inset 0 0 0 2px rgba(255,255,255,0.04), 0 28px 72px rgba(0,0,0,0.65), 0 0 40px rgba(59,99,255,0.07)",
           background: "#151d3a",
-          width: "168px",
+          width: `${width}px`,
           overflow: "hidden",
           position: "relative",
+          transition: "width 0.45s cubic-bezier(0.22, 1, 0.36, 1), border 0.3s ease, box-shadow 0.35s ease",
         }}
-        className="group-hover:!rotate-0 group-hover:scale-105"
+        className={layout === "row" ? "group-hover:scale-105 group-hover:!rotate-0" : ""}
       >
-        {/* Status bar cover / notch */}
         <div
           style={{
             position: "absolute",
@@ -109,7 +158,7 @@ function PhoneFrame({
           src={src}
           alt={alt}
           style={{
-            width: "168px",
+            width: `${width}px`,
             display: "block",
             aspectRatio: "1280 / 2048",
             objectFit: "cover",
@@ -118,15 +167,118 @@ function PhoneFrame({
       </div>
       <span
         style={{
-          fontSize: "10px",
+          fontSize: isSelected ? "11px" : "10px",
           fontWeight: 600,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
-          color: "#5a6e98",
+          color: isSelected ? "#8ab4ff" : "#5a6e98",
+          transition: "color 0.3s ease, font-size 0.3s ease",
         }}
       >
         {label}
       </span>
+    </button>
+  );
+}
+
+function PhoneGallery() {
+  const [selected, setSelected] = useState<number | null>(null);
+  const hasFocus = selected !== null;
+
+  const getOffset = (index: number) => {
+    if (selected === null || index === selected) return 0;
+    const dist = index - selected;
+    return dist * 150;
+  };
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        marginBottom: "5rem",
+        padding: "3rem 1rem",
+        minHeight: hasFocus ? "min(520px, 70vh)" : "340px",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "600px",
+          height: "300px",
+          background:
+            "radial-gradient(ellipse, rgba(59,99,255,0.12) 0%, transparent 70%)",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      {hasFocus && (
+        <button
+          type="button"
+          aria-label="Close phone preview"
+          onClick={() => setSelected(null)}
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 2,
+            border: "none",
+            background: "transparent",
+            cursor: "default",
+          }}
+        />
+      )}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 3,
+          display: hasFocus ? "block" : "flex",
+          justifyContent: hasFocus ? undefined : "center",
+          flexWrap: hasFocus ? undefined : "wrap",
+          gap: hasFocus ? undefined : "clamp(16px, 3vw, 36px)",
+          height: hasFocus ? "min(480px, 65vh)" : "auto",
+          alignItems: hasFocus ? undefined : "flex-end",
+        }}
+      >
+        {phones.map((phone, index) => (
+          <div
+            key={phone.label}
+            style={
+              hasFocus
+                ? ({
+                    ["--offset-x" as string]: `${getOffset(index)}px`,
+                  } as CSSProperties)
+                : undefined
+            }
+          >
+            <PhoneFrame
+              {...phone}
+              width={hasFocus && selected === index ? FOCUSED_WIDTH : BASE_WIDTH}
+              isSelected={selected === index}
+              isDimmed={hasFocus && selected !== index}
+              layout={hasFocus ? "focus" : "row"}
+              onClick={() =>
+                setSelected(selected === index ? null : index)
+              }
+            />
+          </div>
+        ))}
+      </div>
+      {hasFocus && (
+        <p
+          style={{
+            position: "relative",
+            zIndex: 4,
+            textAlign: "center",
+            marginTop: "1rem",
+            fontSize: "12px",
+            color: "#5a6e98",
+          }}
+        >
+          Tap the screen again or another phone to close
+        </p>
+      )}
     </div>
   );
 }
@@ -137,7 +289,6 @@ export default function App() {
       className="min-h-screen bg-background text-foreground"
       style={{ fontFamily: "'Inter', sans-serif" }}
     >
-      {/* Subtle dot grid background */}
       <div
         style={{
           position: "fixed",
@@ -154,7 +305,6 @@ export default function App() {
         className="relative mx-auto px-6 py-20"
         style={{ maxWidth: "1100px", zIndex: 1 }}
       >
-        {/* Header */}
         <div className="mb-14">
           <div className="flex items-center gap-3 mb-6">
             <div style={{ width: "36px", height: "2px", background: "#3b63ff" }} />
@@ -244,45 +394,12 @@ export default function App() {
           </div>
         </div>
 
-        {/* Phone Gallery */}
-        <div
-          style={{
-            position: "relative",
-            marginBottom: "5rem",
-            padding: "3rem 1rem",
-          }}
-        >
-          {/* Glow behind phones */}
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "600px",
-              height: "300px",
-              background:
-                "radial-gradient(ellipse, rgba(59,99,255,0.12) 0%, transparent 70%)",
-              pointerEvents: "none",
-              zIndex: 0,
-            }}
-          />
-          <div
-            className="flex justify-center flex-wrap"
-            style={{ gap: "clamp(16px, 3vw, 36px)", position: "relative", zIndex: 1 }}
-          >
-            {phones.map((phone) => (
-              <PhoneFrame key={phone.label} {...phone} />
-            ))}
-          </div>
-        </div>
+        <PhoneGallery />
 
-        {/* Summary + Features */}
         <div
           className="grid gap-10"
           style={{ gridTemplateColumns: "1fr", alignItems: "start" }}
         >
-          {/* Divider */}
           <div
             style={{
               borderTop: "1px solid rgba(255,255,255,0.07)",
@@ -296,7 +413,6 @@ export default function App() {
                 alignItems: "start",
               }}
             >
-              {/* About */}
               <div>
                 <h2
                   style={{
@@ -336,7 +452,6 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Features Grid */}
               <div>
                 <h2
                   style={{

@@ -1,11 +1,36 @@
+# FixMyStreet — Portfolio
 
-  # Portfolio project layout
+Interactive portfolio page for the **FixMyStreet** Flutter app (citizen infrastructure reporting).
 
-  This is a code bundle for Portfolio project layout. The original project is available at https://www.figma.com/design/9TY7KUkIELq1L5hsaHgVjP/Portfolio-project-layout.
+## Live site
 
-  ## Running the code
+**https://fixmystreet-portfolio.vercel.app**
 
-  Run `npm i` to install the dependencies.
+- Browse screenshots (click a phone to enlarge)
+- [Download Android APK](https://fixmystreet-portfolio.vercel.app/fixmystreet.apk)
 
-  Run `npm run dev` to start the development server.
-  
+## App repository
+
+**https://github.com/RoycetheGreat2/fixmystreet**
+
+## Local development
+
+```bash
+npm install
+npm run dev
+```
+
+## Deploy (Vercel)
+
+No GitHub connection required — deploy static build from this folder:
+
+```bash
+npm run build
+npx vercel deploy --prod
+```
+
+Place `app-release.apk` in `public/fixmystreet.apk` before deploying so the download button works.
+
+## Stack
+
+Vite · React · Tailwind CSS · Lucide icons
